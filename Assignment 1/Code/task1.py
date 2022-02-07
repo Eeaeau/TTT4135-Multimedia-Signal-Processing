@@ -7,6 +7,30 @@ def dct2(block):
     return fftpack.dct(fftpack.dct(block.T, norm="ortho").T, norm="ortho")
 
 
+# implement 2D IDCT
+def idct2(a):
+    return fftpack.idct(fftpack.idct(a.T, norm="ortho").T, norm="ortho")
+
+
+# def compute_psnr(original, img2):
+#     img1 = img1.astype(np.float64) / 255.0
+#     img2 = img2.astype(np.float64) / 255.0
+#     mse = np.mean((img1 - img2) ** 2)
+#     if mse == 0:
+#         return "Same Image"
+#     return 20 * np.log10(1.0 / mse)
+
+
+def compute_psnr(original, compressed):
+    mse = np.mean((original - compressed) ** 2)
+    if mse == 0:  # MSE is zero means no noise is present in the signal .
+        # Therefore PSNR have no importance.
+        return "Same Image"
+    max_pixel = 255.0
+    psnr = 20 * np.log10(max_pixel / np.sqrt(mse))
+    return psnr
+
+
 data_block = np.array(
     [
         124,
@@ -79,6 +103,10 @@ data_block = data_block.reshape((8, 8))
 
 print(data_block)
 
+# plt.imshow(data_block)
+# plt.show()
+
+
 q_table = np.array(
     [
         16,
@@ -149,7 +177,7 @@ q_table = np.array(
 )
 q_table = q_table.reshape((8, 8))
 
-
+# -------------------- a --------------------- #
 data_block_DCT2 = dct2(data_block)
 
 print(data_block_DCT2)
@@ -160,6 +188,7 @@ np.savetxt(
 # plt.imshow(np.log(np.abs(data_block_DCT2)))
 # plt.show()
 
+# -------------------- b --------------------- #
 
 DCT2_quantized = np.floor(data_block_DCT2 / q_table + 0.5)
 print(DCT2_quantized)
@@ -167,5 +196,22 @@ np.savetxt(
     "DCT2_quantized.csv", (DCT2_quantized), fmt="%d"
 )  # used for tabular in latex with generator
 
-plt.imshow(DCT2_quantized)
-plt.show()
+# plt.imshow(DCT2_quantized)
+# plt.show()
+
+# -------------------- c --------------------- #
+
+dequantized = q_table * DCT2_quantized
+
+data_block_IDCT2 = idct2(dequantized)
+
+print(data_block_IDCT2)
+# plt.imshow(data_block_IDCT2)
+# plt.show()
+
+np.savetxt(
+    "data_block_IDCT2.csv", (data_block_IDCT2), fmt="%d"
+)  # used for tabular in latex with generator
+
+PSNR = compute_psnr(data_block, data_block_IDCT2)
+print("psnr: ", PSNR)
